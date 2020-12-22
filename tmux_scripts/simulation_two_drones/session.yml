@@ -1,7 +1,7 @@
 name: simulation
 root: ./
 startup_window: goto_start 
-pre_window: export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export WORLD_NAME=simulation; export SENSORS="garmin_down"
+pre_window: export UAV_NAME=uav1; export RUN_TYPE=simulation; export UAV_TYPE=f450; export WORLD_NAME=simulation; export SENSORS="garmin_down"; export SENSORS="garmin_down"
 windows:
   - roscore:
       layout: tiled
@@ -19,8 +19,8 @@ windows:
   - spawn:
       layout: tiled
       panes:
-        - waitForSimulation; spawn_uav 1 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos1.yaml --enable-uv-leds --led-frequencies 15 15
-        - waitForSimulation; spawn_uav 2 --$UAV_TYPE --run --delete --enable-rangefinder --enable-ground-truth --file pos2.yaml --enable-uv-camera --uv-camera-calibration-file "$(rospack find uvdar_core)/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
+        - waitForSimulation; rosservice call /mrs_drone_spawner/spawn "1 $UAV_TYPE --enable-rangefinder --enable-ground-truth --pos_file `pwd`/pos1.yaml --enable-uv-leds --uvled-fr-r 15 --uvled-fr-l 15"
+        - waitForSimulation; sleep 10; rosservice call /mrs_drone_spawner/spawn "2 $UAV_TYPE --enable-rangefinder --enable-ground-truth --pos_file `pwd`/pos2.yaml --enable-uv-camera --uvcam-calib-file `rospack find uvdar_core`/include/OCamCalib/config/calib_results_bf_uv_fe.txt"
   - control:
       layout: tiled
       panes:
