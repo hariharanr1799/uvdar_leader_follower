@@ -21,6 +21,18 @@ sudo apt-mark hold openssh-server
 sudo apt-get -y upgrade --fix-missing
 sudo apt-get -y install dpkg git
 
+echo "clone uvdar_core"
+cd
+git clone https://github.com/ctu-mrs/uvdar_core.git
+
+echo "clone uvdar_gazebo_plugin"
+cd
+git clone https://github.com/ctu-mrs/uvdar_gazebo_plugin.git
+
+echo "clone summer_school_supervisor"
+cd
+git clone https://github.com/ctu-mrs/summer_school_supervisor.git
+
 echo "clone uav_core"
 cd
 git clone https://github.com/ctu-mrs/uav_core.git
@@ -36,23 +48,6 @@ cd uav_core
 
 echo "running the main install.sh"
 ./installation/install.sh
-
-echo "clone uvdar_core"
-cd
-git clone https://github.com/ctu-mrs/uvdar_core.git
-cd uvdar_core
-
-echo "clone uvdar_gazebo_plugin"
-cd
-git clone https://github.com/ctu-mrs/uvdar_gazebo_plugin.git
-cd uvdar_gazebo_plugin
-
-echo "running the main install.sh"
-./installation/install.sh
-
-echo "clone summer_school_supervisor"
-cd
-git clone https://github.com/ctu-mrs/summer_school_supervisor.git
 
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
