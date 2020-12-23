@@ -37,15 +37,13 @@ echo "clone uav_core"
 cd
 git clone https://github.com/ctu-mrs/uav_core.git
 cd uav_core
-
 echo "running the main install.sh"
 ./installation/install.sh
 
 echo "clone simulation"
 cd
 git clone https://github.com/ctu-mrs/simulation.git
-cd uav_core
-
+cd simulation
 echo "running the main install.sh"
 ./installation/install.sh
 
