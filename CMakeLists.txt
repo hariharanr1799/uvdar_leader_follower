@@ -9,7 +9,15 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   std_msgs
   mrs_lib
+  cmake_modules
   dynamic_reconfigure
+)
+
+#########################
+## dynamic reconfigure ##
+#########################
+generate_dynamic_reconfigure_options(
+  cfg/Follower.cfg
 )
 
 ###########
@@ -18,13 +26,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Eigen3 REQUIRED)
 set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
 set(Eigen_LIBRARIES ${Eigen_LIBRARIES})
-
-#########################
-## dynamic reconfigure ##
-#########################
-generate_dynamic_reconfigure_options(
-  cfg/Follower.cfg
-)
 
 ###################################
 ## catkin specific configuration ##
