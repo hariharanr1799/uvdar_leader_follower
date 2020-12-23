@@ -9,7 +9,15 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   std_msgs
   mrs_lib
+  cmake_modules
   dynamic_reconfigure
+)
+
+#########################
+## dynamic reconfigure ##
+#########################
+generate_dynamic_reconfigure_options(
+  cfg/Follower.cfg
 )
 
 ###########
@@ -19,20 +27,13 @@ find_package(Eigen3 REQUIRED)
 set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
 set(Eigen_LIBRARIES ${Eigen_LIBRARIES})
 
-#########################
-## dynamic reconfigure ##
-#########################
-generate_dynamic_reconfigure_options(
-  cfg/Follower.cfg
-)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
   INCLUDE_DIRS include
   DEPENDS Eigen
-  CATKIN_DEPENDS roscpp roslib std_msgs nav_msgs mrs_lib 
+  CATKIN_DEPENDS roscpp roslib std_msgs nav_msgs mrs_lib
   LIBRARIES follower VelocityEstimator
 )
 
@@ -47,12 +48,22 @@ include_directories(
 )
 
 add_library(follower src/follower.cpp)
+add_dependencies(follower
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+  )
 target_link_libraries(follower
   ${catkin_LIBRARIES}
   ${Eigen_LIBRARIES}
 )
 
 add_library(VelocityEstimator src/velocity_estimator.cpp)
+add_dependencies(VelocityEstimator
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  ${PROJECT_NAME}_gencfg
+  )
 target_link_libraries(VelocityEstimator
   ${catkin_LIBRARIES}
   ${Eigen_LIBRARIES}

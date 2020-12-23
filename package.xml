@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <package format="2">
 
   <name>uvdar_leader_follower</name>
@@ -14,8 +15,8 @@
   <depend>std_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>mrs_lib</depend>
+  <depend>cmake_modules</depend>
   <depend>dynamic_reconfigure</depend>
-
-  <exec_depend>message_runtime</exec_depend>
+  <depend>message_runtime</depend>
 
 </package>
