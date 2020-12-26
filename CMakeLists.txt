@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1.2)
 project(uvdar_leader_follower)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -13,23 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
-#########################
-## dynamic reconfigure ##
-#########################
 generate_dynamic_reconfigure_options(
   cfg/Follower.cfg
 )
 
-###########
-## Eigen ##
-###########
 find_package(Eigen3 REQUIRED)
 set(Eigen_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIRS})
 set(Eigen_LIBRARIES ${Eigen_LIBRARIES})
 
-###################################
-## catkin specific configuration ##
-###################################
 catkin_package(
   INCLUDE_DIRS include
   DEPENDS Eigen
@@ -37,9 +29,6 @@ catkin_package(
   LIBRARIES follower VelocityEstimator
 )
 
-###########
-## Build ##
-###########
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
