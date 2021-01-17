@@ -13,7 +13,7 @@
 
   <group ns="$(arg uav_name)">
 
-    <node name="trajectory_loader" pkg="trajectory_loader" type="load_trajectory" args="--load" output="screen" launch-prefix="$(arg launch_prefix)" >
+    <node name="trajectory_loader" pkg="trajectory_loader" type="trajectory_loader" output="screen" launch-prefix="$(arg launch_prefix)" >
 
       <rosparam file="$(find uvdar_leader_follower)/config/leader.yaml" />
       <rosparam param="main/uav_name_list" subst_value="True">["$(arg uav_name)"]</rosparam>
@@ -21,6 +21,7 @@
 
       <param name="current_working_directory" type="string" value="$(find uvdar_leader_follower)" />
       <param name="service_topic" type="string" value="control_manager/trajectory_reference" />
+      <param name="mode" type="string" value="load" />
 
       <param name="use_heading" type="bool" value="$(arg use_heading)" />
       <param name="fly_now" type="bool" value="$(arg fly_now)" />
