@@ -166,11 +166,11 @@ ReferencePoint FollowerController::createReferencePoint() {
   if (use_estimator) {
     point.position.x() = leader_predicted_position.x() + position_offset.x();
     point.position.y() = leader_predicted_position.y() + position_offset.y();
-    point.position.z() = leader_predicted_position.z() + position_offset.z();
+    point.position.z() = 3.0;
   } else {
     point.position.x() = leader_position.x() + position_offset.x();
     point.position.y() = leader_position.y() + position_offset.y();
-    point.position.z() = leader_position.z() + position_offset.z();
+    point.position.z() = 3.0;
   }
   point.heading         = heading_offset;
   point.use_for_control = true;

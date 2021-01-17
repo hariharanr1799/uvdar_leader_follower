@@ -59,9 +59,9 @@ windows:
       layout: tiled
       panes:
         # leader will not avoid collisions
-        - export UAV_NAME=uav1; waitForControl; rosservice call /$UAV_NAME/control_manager/mpc_tracker/collision_avoidance 0
-        - export UAV_NAME=uav2; waitForControl; rosservice call /$UAV_NAME/constraint_manager/set_constraints uvdar
-        # you can experiment with controller settings by changing the follower constraints to medium. Beware: faster acceleration will produce more tilt -> less stable camera image
+        - export UAV_NAME=uav1; waitForControl; sleep 7; rosservice call /$UAV_NAME/control_manager/mpc_tracker/collision_avoidance 0
+  #       - export UAV_NAME=uav2; waitForControl; rosservice call /$UAV_NAME/constraint_manager/set_constraints uvdar
+  #       # you can experiment with controller settings by changing the follower constraints to medium. Beware: faster acceleration will produce more tilt -> less stable camera image
   - uv_observer:
       layout: even-vertical
       panes:
@@ -94,5 +94,5 @@ windows:
   - gazebo_camera_follow:
       layout: tiled
       panes:
-        - waitForOdometry; gz camera -c gzclient_camera -f uav1; history -s gz camera -c gzclient_camera -f uav2
+        - waitForOdometry; sleep 8; gz camera -c gzclient_camera -f uav2
         - waitForControl; sleep 5; ~/.i3/layout_manager.sh layout.json
