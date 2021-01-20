@@ -21,6 +21,8 @@ ros::Time       last_leader_contact;
 
 // dynamically reconfigurable
 Eigen::Vector3d position_offset          = Eigen::Vector3d(0.0, 0.0, 0.0);
+double          los_ideal      = 0.0;
+double          los_min                  = 4,                               los_max       =     14;
 double          heading_offset           = 0.0;
 double          uvdar_msg_interval       = 0.1;
 bool            use_estimator            = false;
@@ -52,6 +54,11 @@ uvdar_leader_follower::FollowerConfig FollowerController::initialize(mrs_lib::Pa
   param_loader.loadParam("desired_offset/y", position_offset.y());
   param_loader.loadParam("desired_offset/z", position_offset.z());
   param_loader.loadParam("heading_offset", heading_offset);
+  param_loader.loadParam("use_estimator", use_estimator);
+  param_loader.loadParam("use_trajectory_reference", use_trajectory_reference);
+  param_loader.loadParam("use_speed_tracker", use_speed_tracker);
+
+  los_ideal = position_offset.norm();
 
   //// initialize the dynamic reconfigurables with values from YAML file and values set above
   uvdar_leader_follower::FollowerConfig config;
@@ -199,15 +206,25 @@ ReferenceTrajectory FollowerController::createReferenceTrajectory() {
 
   Eigen::Vector3d point_2;
   double          heading_2;
-
+  
   trajectory.use_for_control = false;
   if (use_trajectory_reference) {
     if (use_estimator) {
+
       point_1   = follower_position_tracker;
       heading_1 = follower_heading_tracker;
 
       point_2   = leader_predicted_position + position_offset + (leader_predicted_velocity * control_action_interval);
-      heading_2 = heading_offset;
+      
+      double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+      heading_2 = heading + heading_offset;
+
+      if (point_1.z() >= 4) point_1[2] = 3.8;
+      if (point_1.z() <= 2) point_1[2] = 2.2;
+      if (point_2.z() >= 4) point_2[2] = 3.8;
+      if (point_2.z() <= 2) point_2[2] = 2.2;
+
+      ROS_INFO("[%s]: z: %.2f, %.2f", ros::this_node::getName().c_str(), point_1.z(), point_2.z());
 
       trajectory.positions.push_back(point_1);
       trajectory.positions.push_back(point_2);
@@ -237,9 +254,46 @@ SpeedCommand FollowerController::createSpeedCommand() {
   }
 
   if (use_estimator) {
+
+    // Velocity
+
     command.velocity = leader_predicted_velocity;
-    command.height   = leader_predicted_position.z() + position_offset.z();
-    command.heading  = follower_heading_odometry;
+
+    Eigen::Vector3d los = leader_predicted_position - follower_position_tracker;
+    
+    double los_mag = los.norm();
+    Eigen::Vector3d los_dir = los/los_mag;
+
+    ROS_INFO("los_mag: %.2f", los_mag);
+
+    if (los_mag < los_min) command.velocity += (-los_dir * 5);
+    else if (los_mag > los_max) command.velocity += (los_dir * 5);
+    else if (los_mag < los_ideal) command.velocity += (-los_dir * 5 * (los_ideal - los_mag)/(los_ideal - los_min));
+    else if (los_ideal < los_mag) command.velocity += (los_dir * 5 * (los_ideal - los_mag)/(los_ideal - los_max));
+
+    // Normalize velocity within limits
+
+    double velocity_magnitude = command.velocity.norm();
+    Eigen::Vector3d velocity_direction = command.velocity/velocity_magnitude;
+
+    if (velocity_magnitude > 5) velocity_magnitude = 5;
+    if (velocity_magnitude < -5) velocity_magnitude = -5;
+
+    command.velocity = velocity_magnitude*velocity_direction;
+
+    // Height
+
+    command.height   = leader_predicted_position.z() + position_offset.z();;
+
+    if (command.height >= 4) command.height = 3.8;
+    if (command.height <= 2) command.height = 2.2;
+
+    // Heading
+
+    double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+    command.heading  = heading + heading_offset;
+
+    ROS_INFO("[%s]: Speed: %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
   }
 
   if (use_speed_tracker) {

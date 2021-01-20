@@ -26,3 +26,6 @@ Q: [10, 0, 0, 0, 0, 0,
 R: [75, 0, 0,
     0, 75, 0,
     0, 0, 75]
+
+use_estimator: true
+use_speed_tracker: true
