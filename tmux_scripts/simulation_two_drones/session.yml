@@ -50,11 +50,12 @@ windows:
         # #}
   - rviz:
       layout: tiled
+      synchronize: after
       panes:
-        - waitForControl; roslaunch mrs_uav_testing tf_connector_avoidance.launch
-        - export UAV_NAME=uav1; waitForControl; roslaunch mrs_rviz_plugins load_robot.launch
-        - export UAV_NAME=uav2; waitForControl; roslaunch mrs_rviz_plugins load_robot.launch
-        - waitForControl; sleep 3; roslaunch uvdar_leader_follower rviz.launch
+        - 'history -s roslaunch mrs_uav_testing tf_connector_avoidance.launch'
+        - 'export UAV_NAME=uav1; history -s roslaunch mrs_rviz_plugins load_robot.launch'
+        - 'export UAV_NAME=uav2; history -s roslaunch mrs_rviz_plugins load_robot.launch'
+        - 'history -s roslaunch uvdar_leader_follower rviz.launch'
   - update_controllers:
       layout: tiled
       panes:

@@ -21,8 +21,9 @@ ros::Time       last_leader_contact;
 
 // dynamically reconfigurable
 Eigen::Vector3d position_offset          = Eigen::Vector3d(0.0, 0.0, 0.0);
-double          los_ideal      = 0.0;
-double          los_min                  = 4,                               los_max       =     14;
+double          los_ideal                = 0.0;
+double          los_min                  = 4;
+double          los_max                  = 14;
 double          heading_offset           = 0.0;
 double          uvdar_msg_interval       = 0.1;
 bool            use_estimator            = false;
@@ -257,7 +258,7 @@ SpeedCommand FollowerController::createSpeedCommand() {
 
     // Velocity
 
-    command.velocity = leader_predicted_velocity;
+    command.velocity = Eigen::Vector3d(0, 0, 0);
 
     Eigen::Vector3d los = leader_predicted_position - follower_position_tracker;
     

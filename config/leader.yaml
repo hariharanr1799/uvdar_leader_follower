@@ -17,7 +17,7 @@ trajectory:
   base_path: "/home/hariharan/workspace/src/uvdar_leader_follower/trajectories"
   uavs:
     uav1:
-      filename: "leader_1.0ms.txt"
+      filename: "leader_3.0ms.txt"
 
 service:
   timeout: 3     # maximal waiting time for response after calling service
