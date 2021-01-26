@@ -29,3 +29,8 @@ R: [75, 0, 0,
 
 use_estimator: true
 use_speed_tracker: true
+
+# Custom parameters
+los_min: 4
+los_max: 12
+los_ideal: 6

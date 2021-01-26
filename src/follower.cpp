@@ -21,14 +21,17 @@ ros::Time       last_leader_contact;
 
 // dynamically reconfigurable
 Eigen::Vector3d position_offset          = Eigen::Vector3d(0.0, 0.0, 0.0);
-double          los_ideal                = 0.0;
-double          los_min                  = 4;
-double          los_max                  = 14;
 double          heading_offset           = 0.0;
 double          uvdar_msg_interval       = 0.1;
 bool            use_estimator            = false;
 bool            use_speed_tracker        = false;
 bool            use_trajectory_reference = false;
+
+// Custom variables
+double          los_min                  = 0.0;
+double          los_max                  = 0.0;
+double          los_ideal                = 0.0;
+double          MAX_SPEED                = 5.0;
 
 VelocityEstimator estimator;
 Eigen::Vector3d   leader_predicted_position;
@@ -58,6 +61,9 @@ uvdar_leader_follower::FollowerConfig FollowerController::initialize(mrs_lib::Pa
   param_loader.loadParam("use_estimator", use_estimator);
   param_loader.loadParam("use_trajectory_reference", use_trajectory_reference);
   param_loader.loadParam("use_speed_tracker", use_speed_tracker);
+  param_loader.loadParam("los_min", los_min);
+  param_loader.loadParam("los_max", los_max);
+  param_loader.loadParam("los_ideal", los_ideal);
 
   los_ideal = position_offset.norm();
 
@@ -265,12 +271,14 @@ SpeedCommand FollowerController::createSpeedCommand() {
     double los_mag = los.norm();
     Eigen::Vector3d los_dir = los/los_mag;
 
-    ROS_INFO("los_mag: %.2f", los_mag);
+    ROS_INFO("[%s]: Distance: \t %.2f", ros::this_node::getName().c_str(), los_mag);
 
-    if (los_mag < los_min) command.velocity += (-los_dir * 5);
-    else if (los_mag > los_max) command.velocity += (los_dir * 5);
-    else if (los_mag < los_ideal) command.velocity += (-los_dir * 5 * (los_ideal - los_mag)/(los_ideal - los_min));
-    else if (los_ideal < los_mag) command.velocity += (los_dir * 5 * (los_ideal - los_mag)/(los_ideal - los_max));
+    if (los_mag < los_min) command.velocity += (-los_dir * MAX_SPEED);
+    else if (los_mag > los_max) command.velocity += (los_dir * MAX_SPEED);
+    else if (los_mag < los_ideal) command.velocity += (-los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_min/los_ideal,2)));
+    else if (los_ideal < los_mag) command.velocity += (los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_max/los_ideal,2)));
+
+    ROS_INFO("[%s]: Desired Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
 
     // Normalize velocity within limits
 
@@ -281,6 +289,8 @@ SpeedCommand FollowerController::createSpeedCommand() {
     if (velocity_magnitude < -5) velocity_magnitude = -5;
 
     command.velocity = velocity_magnitude*velocity_direction;
+
+    ROS_INFO("[%s]: Normalized Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
 
     // Height
 
@@ -294,7 +304,6 @@ SpeedCommand FollowerController::createSpeedCommand() {
     double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
     command.heading  = heading + heading_offset;
 
-    ROS_INFO("[%s]: Speed: %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
   }
 
   if (use_speed_tracker) {
