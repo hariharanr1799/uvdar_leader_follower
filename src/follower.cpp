@@ -65,8 +65,6 @@ uvdar_leader_follower::FollowerConfig FollowerController::initialize(mrs_lib::Pa
   param_loader.loadParam("los_max", los_max);
   param_loader.loadParam("los_ideal", los_ideal);
 
-  los_ideal = position_offset.norm();
-
   //// initialize the dynamic reconfigurables with values from YAML file and values set above
   uvdar_leader_follower::FollowerConfig config;
   config.desired_offset_x         = position_offset.x();
