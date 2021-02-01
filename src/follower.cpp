@@ -176,17 +176,33 @@ ReferencePoint FollowerController::createReferencePoint() {
   }
 
   if (use_estimator) {
-    point.position.x() = leader_predicted_position.x() + position_offset.x();
-    point.position.y() = leader_predicted_position.y() + position_offset.y();
-    point.position.z() = 3.0;
+
+    Eigen::Vector3d point_2   = leader_predicted_position + (leader_predicted_velocity * control_action_interval);
+
+    Eigen::Vector3d los = follower_position_tracker - point_2;
+    Eigen::Vector3d los_desired = los_ideal*los/los.norm();
+
+    point_2 = point_2 + los_desired;
+
+    point.position.x() = point_2.x();
+    point.position.y() = point_2.y();
+    point.position.z() = point_2.z();;
+    point.heading      = atan2(-1*los.y(), -1*los.x());
+
+    ROS_INFO("[%s - ReferencePoint]: Distance: \t %.2f", ros::this_node::getName().c_str(), (follower_position_tracker-leader_position).norm());
+    
   } else {
     point.position.x() = leader_position.x() + position_offset.x();
     point.position.y() = leader_position.y() + position_offset.y();
-    point.position.z() = 3.0;
+    point.position.z() = leader_position.z() + position_offset.z();
+    point.heading      = heading_offset;
   }
-  point.heading         = heading_offset;
+  
   point.use_for_control = true;
-
+  
+  if (point.position.z() >= 4) point.position.z() = 3.8;
+  if (point.position.z() <= 2) point.position.z() = 2.2;
+  
   return point;
 }
 //}
@@ -219,18 +235,24 @@ ReferenceTrajectory FollowerController::createReferenceTrajectory() {
       point_1   = follower_position_tracker;
       heading_1 = follower_heading_tracker;
 
-      point_2   = leader_predicted_position + position_offset + (leader_predicted_velocity * control_action_interval);
+      if (point_1.z() >= 4) point_1.z() = 3.8;
+      if (point_1.z() <= 2) point_1.z() = 2.2;
+
+      point_2   = leader_predicted_position + (leader_predicted_velocity * control_action_interval);
+
+      Eigen::Vector3d los = follower_position_tracker - point_2;
+      Eigen::Vector3d los_desired = los_ideal*los/los.norm();
+
+      point_2 = point_2 + los_desired;
       
-      double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+      double heading = atan2(-1*los.y(), -1*los.x());
       heading_2 = heading + heading_offset;
 
-      if (point_1.z() >= 4) point_1[2] = 3.8;
-      if (point_1.z() <= 2) point_1[2] = 2.2;
-      if (point_2.z() >= 4) point_2[2] = 3.8;
-      if (point_2.z() <= 2) point_2[2] = 2.2;
+      if (point_2.z() >= 4) point_2.z() = 3.8;
+      if (point_2.z() <= 2) point_2.z() = 2.2;
 
-      ROS_INFO("[%s]: z: %.2f, %.2f", ros::this_node::getName().c_str(), point_1.z(), point_2.z());
-
+      ROS_INFO("[%s - ReferenceTrajectory]: Distance: \t %.2f", ros::this_node::getName().c_str(), (follower_position_tracker-leader_position).norm());
+      
       trajectory.positions.push_back(point_1);
       trajectory.positions.push_back(point_2);
 
@@ -258,55 +280,55 @@ SpeedCommand FollowerController::createSpeedCommand() {
     command.use_for_control = false;
   }
 
-  if (use_estimator) {
-
-    // Velocity
-
-    command.velocity = Eigen::Vector3d(0, 0, 0);
-
-    Eigen::Vector3d los = leader_predicted_position - follower_position_tracker;
-    
-    double los_mag = los.norm();
-    Eigen::Vector3d los_dir = los/los_mag;
-
-    ROS_INFO("[%s]: Distance: \t %.2f", ros::this_node::getName().c_str(), los_mag);
-
-    if (los_mag < los_min) command.velocity += (-los_dir * MAX_SPEED);
-    else if (los_mag > los_max) command.velocity += (los_dir * MAX_SPEED);
-    else if (los_mag < los_ideal) command.velocity += (-los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_min/los_ideal,2)));
-    else if (los_ideal < los_mag) command.velocity += (los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_max/los_ideal,2)));
-
-    ROS_INFO("[%s]: Desired Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
-
-    // Normalize velocity within limits
-
-    double velocity_magnitude = command.velocity.norm();
-    Eigen::Vector3d velocity_direction = command.velocity/velocity_magnitude;
-
-    if (velocity_magnitude > 5) velocity_magnitude = 5;
-    if (velocity_magnitude < -5) velocity_magnitude = -5;
-
-    command.velocity = velocity_magnitude*velocity_direction;
-
-    ROS_INFO("[%s]: Normalized Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
-
-    // Height
-
-    command.height   = leader_predicted_position.z() + position_offset.z();;
-
-    if (command.height >= 4) command.height = 3.8;
-    if (command.height <= 2) command.height = 2.2;
-
-    // Heading
-
-    double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
-    command.heading  = heading + heading_offset;
-
-  }
-
   if (use_speed_tracker) {
+    if (use_estimator) {
+      // Velocity
+      command.velocity = Eigen::Vector3d(0, 0, 0);
+
+      Eigen::Vector3d los = leader_predicted_position - follower_position_tracker;
+      
+      double los_mag = los.norm();
+      Eigen::Vector3d los_dir = los/los_mag;
+
+      ROS_INFO("[%s]: Distance: \t %.2f", ros::this_node::getName().c_str(), los_mag);
+
+      if (los_mag < los_min) command.velocity += (-los_dir * MAX_SPEED);
+      else if (los_mag > los_max) command.velocity += (los_dir * MAX_SPEED);
+      else if (los_mag < los_ideal) command.velocity += (-los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_min/los_ideal,2)));
+      else if (los_ideal < los_mag) command.velocity += (los_dir * MAX_SPEED * (1 - pow(los_mag/los_ideal,2))/(1 - pow(los_max/los_ideal,2)));
+
+      ROS_INFO("[%s]: Desired Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
+
+      // Normalize velocity within limits
+
+      double velocity_magnitude = command.velocity.norm();
+      Eigen::Vector3d velocity_direction = command.velocity/velocity_magnitude;
+
+      if (velocity_magnitude > 5) velocity_magnitude = 5;
+      if (velocity_magnitude < -5) velocity_magnitude = -5;
+
+      command.velocity = velocity_magnitude*velocity_direction;
+
+      ROS_INFO("[%s]: Normalized Speed: \t %.2f", ros::this_node::getName().c_str(), command.velocity.norm());
+
+      // Height
+
+      command.height   = leader_predicted_position.z() + position_offset.z();;
+
+      if (command.height >= 4) command.height = 3.8;
+      if (command.height <= 2) command.height = 2.2;
+
+      // Heading
+
+      double heading = atan2(leader_predicted_position.y() - follower_position_tracker.y(), leader_predicted_position.x() - follower_position_tracker.x());
+      command.heading  = heading + heading_offset;
+
+    }
     command.use_for_control = true;
   } else {
+    command.velocity        = Eigen::Vector3d(0, 0, 0);
+    command.heading         = 0;
+    command.height          = 0;
     command.use_for_control = false;
   }
   return command;

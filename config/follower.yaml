@@ -18,19 +18,20 @@ heading_offset: 0.3 # [rad]
 Q: [10, 0, 0, 0, 0, 0,
     0, 10, 0, 0, 0, 0,
     0, 0, 10, 0, 0, 0,
-    0, 0, 0, 1, 0, 0,
-    0, 0, 0, 0, 1, 0,
-    0, 0, 0, 0, 0, 1]
+    0, 0, 0, 5, 0, 0,
+    0, 0, 0, 0, 5, 0,
+    0, 0, 0, 0, 0, 5]
 
 # # Measurement noise
-R: [75, 0, 0,
-    0, 75, 0,
-    0, 0, 75]
+R: [50, 0, 0,
+    0, 50, 0,
+    0, 0, 50]
 
 use_estimator: true
-use_speed_tracker: true
+# use_trajectory_reference: true
+# use_speed_tracker: true
 
-# Custom parameters
+los_ideal: 4.5
+# # For speed tracker only
 los_min: 4
 los_max: 12
-los_ideal: 6
